@@ -2,8 +2,8 @@
 /**
  * 运行时入口会取本文件构造好的Vue对象
  */
-import Vue from 'core/index'
-import config from 'core/config'
+import Vue from 'core/index' // Vue主体由core核心构成
+import config from 'core/config' // Vue.config的默认值
 import { extend, noop } from 'shared/util'
 import { mountComponent } from 'core/instance/lifecycle'
 import { devtools, inBrowser } from 'core/util/index'
