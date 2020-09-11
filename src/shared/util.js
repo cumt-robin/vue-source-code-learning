@@ -4,10 +4,12 @@ export const emptyObject = Object.freeze({})
 
 // These helpers produce better VM code in JS engines due to their
 // explicitness and function inlining.
+// 是undefined或者是unll
 export function isUndef (v: any): boolean %checks {
   return v === undefined || v === null
 }
 
+// 不是undefined，且不是unll
 export function isDef (v: any): boolean %checks {
   return v !== undefined && v !== null
 }
@@ -65,6 +67,7 @@ export function isRegExp (v: any): boolean {
 
 /**
  * Check if val is a valid array index.
+ * 判断一个值是不是合理的数组索引，主要是检查是不是能转为有限正整数（含0）
  */
 export function isValidArrayIndex (val: any): boolean {
   const n = parseFloat(String(val))
@@ -102,6 +105,8 @@ export function toNumber (val: string): number | string {
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
+ * 根据一个,分隔的字符串创建一个字典表，并且返回一个函数，可以检查一个字符串在不在这个字典表中
+ * 可以根据expectsLowerCase启用小写字符检查
  */
 export function makeMap (
   str: string,
@@ -119,16 +124,19 @@ export function makeMap (
 
 /**
  * Check if a tag is a built-in tag.
+ * 检查一个标签是不是内置标签，Vue中的内置标签是slot和component，其他的就是自定义组件或者原生HTML标签了
  */
 export const isBuiltInTag = makeMap('slot,component', true)
 
 /**
  * Check if an attribute is a reserved attribute.
+ * 检查是否是保留属性，比如key,ref,slot,slot-scope,is
  */
 export const isReservedAttribute = makeMap('key,ref,slot,slot-scope,is')
 
 /**
  * Remove an item from an array.
+ * 从数组中移除一个目标值
  */
 export function remove (arr: Array<any>, item: any): Array<any> | void {
   if (arr.length) {
@@ -149,6 +157,9 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
 
 /**
  * Create a cached version of a pure function.
+ * 利用闭包，创建一个纯函数的缓存版本。
+ * 如果某个值从没作为参数执行过，就把参数作为key，纯函数运行结果作为value，缓存在cache对象中，
+ * 如果传给纯函数的参数命中了缓存，就直接取cache的结果，而不用再重复执行纯函数
  */
 export function cached<F: Function> (fn: F): F {
   const cache = Object.create(null)
@@ -161,13 +172,16 @@ export function cached<F: Function> (fn: F): F {
 /**
  * Camelize a hyphen-delimited string.
  */
+// 检测字符串中的连字符-和下一个字符
 const camelizeRE = /-(\w)/g
+// 将连字符-分隔的字符串改为驼峰写法
 export const camelize = cached((str: string): string => {
   return str.replace(camelizeRE, (_, c) => c ? c.toUpperCase() : '')
 })
 
 /**
  * Capitalize a string.
+ * 首字母改为大写
  */
 export const capitalize = cached((str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -175,6 +189,7 @@ export const capitalize = cached((str: string): string => {
 
 /**
  * Hyphenate a camelCase string.
+ * 驼峰写法改为连字符-写法
  */
 const hyphenateRE = /\B([A-Z])/g
 export const hyphenate = cached((str: string): string => {
@@ -190,6 +205,7 @@ export const hyphenate = cached((str: string): string => {
  */
 
 /* istanbul ignore next */
+// polyfill一个简单版本的bind
 function polyfillBind (fn: Function, ctx: Object): Function {
   function boundFn (a) {
     const l = arguments.length
@@ -204,6 +220,7 @@ function polyfillBind (fn: Function, ctx: Object): Function {
   return boundFn
 }
 
+// 包装一下，让调用形式一致
 function nativeBind (fn: Function, ctx: Object): Function {
   return fn.bind(ctx)
 }
@@ -227,6 +244,7 @@ export function toArray (list: any, start?: number): Array<any> {
 
 /**
  * Mix properties into target object.
+ * 基于一个新对象扩展旧对象，同名的属性会覆盖掉旧的，浅merge
  */
 export function extend (to: Object, _from: ?Object): Object {
   for (const key in _from) {
@@ -237,6 +255,7 @@ export function extend (to: Object, _from: ?Object): Object {
 
 /**
  * Merge an Array of Objects into a single Object.
+ * 把一个对象数组merge到目标对象上，按照extend的逻辑，最后面的对象如果和前面的对象有同名属性，会覆盖掉前面的。
  */
 export function toObject (arr: Array<any>): Object {
   const res = {}
@@ -254,11 +273,13 @@ export function toObject (arr: Array<any>): Object {
  * Perform no operation.
  * Stubbing args to make Flow happy without leaving useless transpiled code
  * with ...rest (https://flow.org/blog/2017/05/07/Strict-Function-Call-Arity/).
+ * 无任何行为的函数
  */
 export function noop (a?: any, b?: any, c?: any) {}
 
 /**
  * Always return false.
+ * 永远返回false的函数
  */
 export const no = (a?: any, b?: any, c?: any) => false
 
@@ -266,11 +287,13 @@ export const no = (a?: any, b?: any, c?: any) => false
 
 /**
  * Return the same value.
+ * 返回一样的值，不知道具体用意
  */
 export const identity = (_: any) => _
 
 /**
  * Generate a string containing static keys from compiler modules.
+ * 把传入模块的staticKeys加入到数组中，然后用,连接成字符串
  */
 export function genStaticKeys (modules: Array<ModuleOptions>): string {
   return modules.reduce((keys, m) => {
@@ -281,6 +304,7 @@ export function genStaticKeys (modules: Array<ModuleOptions>): string {
 /**
  * Check if two values are loosely equal - that is,
  * if they are plain objects, do they have the same shape?
+ * 比较两个值是否相等，主要考虑了普通类型和常见的对象类型
  */
 export function looseEqual (a: any, b: any): boolean {
   if (a === b) return true
@@ -321,6 +345,7 @@ export function looseEqual (a: any, b: any): boolean {
  * Return the first index at which a loosely equal value can be
  * found in the array (if value is a plain object, the array must
  * contain an object of the same shape), or -1 if it is not present.
+ * 找出目标值所在的数组下标
  */
 export function looseIndexOf (arr: Array<mixed>, val: mixed): number {
   for (let i = 0; i < arr.length; i++) {
@@ -331,6 +356,7 @@ export function looseIndexOf (arr: Array<mixed>, val: mixed): number {
 
 /**
  * Ensure a function is called only once.
+ * 利用闭包，保证一个函数只执行一次
  */
 export function once (fn: Function): Function {
   let called = false
