@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== 'production') {
     'require' // for Webpack/Browserify
   )
 
+  // 提示使用了不存在的属性或方法
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -34,14 +35,17 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }
 
+  // 判断是否支持原生Proxy
   const hasProxy =
     typeof Proxy !== 'undefined' && isNative(Proxy)
 
   if (hasProxy) {
+    // Vue内置事件修饰符
     const isBuiltInModifier = makeMap('stop,prevent,self,ctrl,shift,alt,meta,exact')
     config.keyCodes = new Proxy(config.keyCodes, {
       set (target, key, value) {
         if (isBuiltInModifier(key)) {
+          // 避免覆盖内置的键值别名
           warn(`Avoid overwriting built-in modifier in config.keyCodes: .${key}`)
           return false
         } else {
@@ -55,10 +59,11 @@ if (process.env.NODE_ENV !== 'production') {
   const hasHandler = {
     has (target, key) {
       const has = key in target
+      // 如果key是允许使用的全局
       const isAllowed = allowedGlobals(key) ||
         (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data))
       if (!has && !isAllowed) {
-        if (key in target.$data) warnReservedPrefix(target, key)
+        if (key in target.$data) warnReservedPrefix(target, key) // 
         else warnNonPresent(target, key)
       }
       return has || !isAllowed
@@ -67,7 +72,9 @@ if (process.env.NODE_ENV !== 'production') {
 
   const getHandler = {
     get (target, key) {
+      // 如果key不在对象target中
       if (typeof key === 'string' && !(key in target)) {
+        // 但是key在$data中，提示
         if (key in target.$data) warnReservedPrefix(target, key)
         else warnNonPresent(target, key)
       }
@@ -75,6 +82,7 @@ if (process.env.NODE_ENV !== 'production') {
     }
   }
 
+  // 代理Vue实例，用于进行开发环境提示
   initProxy = function initProxy (vm) {
     if (hasProxy) {
       // determine which proxy handler to use

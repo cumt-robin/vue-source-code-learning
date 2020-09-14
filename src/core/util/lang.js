@@ -5,10 +5,12 @@
  * using https://www.w3.org/TR/html53/semantics-scripting.html#potentialcustomelementname
  * skipping \u10000-\uEFFFF due to it freezing up PhantomJS
  */
+// a-z A-Z · À-Ö Ø-ö ø-ͽ Ϳ-῿ ​​​​​\u200C-\u200D不可见字符 ‿-⁀  ⁰-↏ Ⰰ-⿯ 、-퟿ 豈-﷏ ﷰ-�
 export const unicodeRegExp = /a-zA-Z\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD/
 
 /**
  * Check if a string starts with $ or _
+ * $或_开头的是保留字
  */
 export function isReserved (str: string): boolean {
   const c = (str + '').charCodeAt(0)
@@ -17,6 +19,7 @@ export function isReserved (str: string): boolean {
 
 /**
  * Define a property.
+ * 用defineProperty定义对象的一个属性
  */
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
   Object.defineProperty(obj, key, {
@@ -31,6 +34,7 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
  * Parse simple path.
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
+// 具体用意不详，留个疑问
 export function parsePath (path: string): any {
   if (bailRE.test(path)) {
     return
